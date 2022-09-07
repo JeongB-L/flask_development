@@ -7,8 +7,8 @@
                 <legend class="border-bottom mb-4">Join Today</legend>
                 <div class="form-group">
                     {{ form.username.label(class="form-control-label") }}
-
                     {% if form.username.errors %}
+                    <!-- this form.username box will exist regardless of the if statement above-->
                         {{ form.username(class="form-control form-control-lg is-invalid") }}
                         <div class="invalid-feedback">
                             {% for error in form.username.errors %}
@@ -69,4 +69,5 @@
             Already Have An Account? <a class="ml-2" href="{{ url_for('login') }}">Please Sign In</a>
         </small>
     </div>
+
 {% endblock content %}
