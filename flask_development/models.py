@@ -1,7 +1,13 @@
 from datetime import datetime
-from flask_development import db
+from flask_development import db, login_manager
+from flask_login import UserMixin
 
-class User(db.Model):
+#   extension to get a user by ID from database
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+class User(db.Model, UserMixin):
     #   this id will be a unique id for the user
     id = db.Column(db.Integer, primary_key=True)
     #   username is string, max length 20, it is unique, and cannot be null
