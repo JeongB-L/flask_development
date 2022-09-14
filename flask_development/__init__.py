@@ -12,5 +12,5 @@ db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
-#login_manager.login_meesage_category = 'info'  this is just for the color of teh flash message
+# login_manager.login_meesage_category = 'info'  this is just for the color of teh flash message
 from flask_development import routes

@@ -2,35 +2,21 @@ import secrets
 import os
 from PIL import Image
 from flask_development.models import User, Post
-from flask import render_template, url_for, flash, redirect, request
+from flask import render_template, url_for, flash, redirect, request, abort
 from flask_development import app, db, bcrypt
-from flask_development.forms import RegistrationForm, LoginForm, UpdateAccountForm
+from flask_development.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm
 from flask_login import login_user, current_user, logout_user, login_required
 
-#from app import db
+# from app import db
 #   db.create_all()
 #   now our server is created
 #   dp.drop_all() removes all the data
-
-posts = [
-    {
-        'author': 'JBL',
-        'title': 'Blog Post 1',
-        'content': 'First post content',
-        'date_posted': 'April 20, 2018'
-    },
-    {
-        'author': 'need tacobell',
-        'title': 'Blog Post 2',
-        'content': 'Second post content',
-        'date_posted': 'April 21, 2018'
-    }
-]
 
 
 @app.route("/")
 @app.route("/home")
 def home():
+    posts = Post.query.all()
     return render_template('home.html', posts=posts)
 
 
@@ -71,17 +57,19 @@ def login():
             login_user(user, remember=form.remember.data)
             #   the original page that the unlogged in user wanted to get in
             next_page = request.args.get('next')
-            #flash('Login Success', 'success')
+            # flash('Login Success', 'success')
             #   redirects to next page if next_page exists. Else, redirects to /home
             return redirect(next_page) if next_page else redirect(url_for('home'))
         else:
             flash('Login Failed. Please check email and password', 'danger')
     return render_template('login.html', title='Login', form=form)
 
+
 @app.route("/logout")
 def logout():
     logout_user()
     return redirect(url_for('home'))
+
 
 def save_picture(form_picture):
     random_hex = secrets.token_hex(8)
@@ -99,6 +87,7 @@ def save_picture(form_picture):
     #   save the image
     i.save(picture_path)
     return picture_fn
+
 
 @app.route("/account", methods=['GET', 'POST'])
 @login_required
@@ -120,3 +109,55 @@ def account():
 
     image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
     return render_template('account.html', title='Account', image_file=image_file, form=form)
+
+
+@app.route("/post/create_post", methods=['GET', 'POST'])
+@login_required
+def new_post():
+    #   requires the user to be logged in
+    form = PostForm()
+    if form.validate_on_submit():
+        post = Post(title=form.title.data, content=form.content.data, author=current_user)
+        db.session.add(post)
+        db.session.commit()
+        #   success is actually a bootstrap class for this message
+        flash('Your post has been created!', 'success')
+        return redirect(url_for('home'))
+    return render_template('create_post.html', title='New Post', form=form, legend='New Post')
+
+
+@app.route("/post/<int:post_id>")
+def post(post_id):
+    #   404 means page doesnt exit, if exists, it simply renders the template
+    post = Post.query.get_or_404(post_id)
+    return render_template('post.html', title=post.title, post=post)
+
+@app.route("/post/<int:post_id>/update", methods=['GET', 'POST'])
+@login_required
+def update_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    #   display 403 message if wrong user tried it
+    if post.author != current_user:
+        abort(403)
+    form = PostForm()
+    if form.validate_on_submit():
+        post.title = form.title.data
+        post.content = form.content.data
+        db.session.commit()
+        flash('Your post has been updated!', 'success')
+        return redirect(url_for('post', post_id=post.id))
+    elif request.method == 'GET':
+        form.title.data = post.title
+        form.content.data = post.content
+    return render_template('create_post.html', title='Update Post', form=form, legend='Update Post')
+
+@app.route("/post/<int:post_id>/delete", methods=['POST'])
+@login_required
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.author != current_user:
+        abort(403)
+    db.session.delete(post)
+    db.session.commit()
+    flash("Your post has been deleted", "success")
+    return redirect(url_for('home'))
