@@ -1,3 +1,3 @@
 # flask_development
 
-practicing flask
+Currently building a simple blog with simple features, using python, html, css, flask, bootstrap, sqlalchemy, and pillow
