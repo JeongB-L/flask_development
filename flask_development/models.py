@@ -1,5 +1,6 @@
 from datetime import datetime
-from flask_development import db, login_manager
+import jwt
+from flask_development import db, login_manager, app
 from flask_login import UserMixin
 
 
@@ -23,6 +24,19 @@ class User(db.Model, UserMixin):
     #   our posts attribute has a relation to Post, backref added a new column author,  lazy=True means
     #   that SQLAlchemy will load that related data
     posts = db.relationship('Post', backref='author', lazy=True)
+
+    def get_reset_token(self, expiration_sec=1800):
+        #   token expires after 30 minutes.
+        reset_token = jwt.encode({"user_id": self.id}, app.config['SECRET_KEY'], algorithm="HS256")
+        return reset_token
+
+    @staticmethod
+    def verify_reset_token(token):
+        try:
+            user_id = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])['user_id']
+        except:
+            return None
+        return User.query.get(user_id)
 
     def __repr__(self):
         return f"User('{self.username}', '{self.email}', '{self.image_file}')"

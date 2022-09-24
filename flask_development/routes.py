@@ -7,6 +7,7 @@ from flask_development import app, db, bcrypt
 from flask_development.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm
 from flask_login import login_user, current_user, logout_user, login_required
 
+
 # from app import db
 #   db.create_all()
 #   now our server is created
@@ -135,6 +136,7 @@ def post(post_id):
     post = Post.query.get_or_404(post_id)
     return render_template('post.html', title=post.title, post=post)
 
+
 @app.route("/post/<int:post_id>/update", methods=['GET', 'POST'])
 @login_required
 def update_post(post_id):
@@ -152,6 +154,7 @@ def update_post(post_id):
         form.title.data = post.title
         form.content.data = post.content
     return render_template('create_post.html', title='Update Post', form=form, legend='Update Post')
+
 
 @app.route("/post/<int:post_id>/delete", methods=['POST'])
 @login_required
@@ -171,4 +174,4 @@ def user_posts(username):
     page = request.args.get('page', 1, type=int)
     user = User.query.filter_by(username=username).first_or_404()
     posts = Post.query.filter_by(author=user).order_by(Post.date_posted.desc()).paginate(page=page, per_page=5)
-    return render_template('user_posts.html', user=user, posts= posts)
+    return render_template('user_posts.html', user=user, posts=posts)
